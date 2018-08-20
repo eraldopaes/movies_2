@@ -1,0 +1,20 @@
+<resources>
+    <string name="app_name">movieApp2</string>
+    <string name="popular_menu_name">Popular</string>
+    <string name="top_rated_menu_name">Top Rated</string>
+    <string name="favorites_menu_name">Favorites</string>
+    <string name="movie_poster_content_description">Poster</string>
+
+    <string name="details_vote_average">Average:</string>
+    <string name="details_released_on">Released on:</string>
+    <string name="details_language">Language:</string>
+    <string name="details_overview">Overview</string>
+
+    <string name="favorite_star_image">Favorites image</string>
+    <string name="play_trailer_image">Play image</string>
+    <string name="no_favorites">You have not selected a movie as a favorite</string>
+    <string name="reviews">Reviews</string>
+    <string name="trailers">Trailers</string>
+    <string name="content">Content</string>
+    <string name="author">Author:</string>
+</resources>
