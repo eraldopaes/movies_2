@@ -59,7 +59,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         if (savedInstanceState != null) {
 
             this.action = savedInstanceState.getString("action");
-            recyclerView.getLayoutManager().onRestoreInstanceState(this.state);
+            this.state = savedInstanceState.getParcelable("state");
 
             if (this.action.equals(FAVORITE)) {
                 retrieveFavoritesFromRoom();
@@ -120,14 +120,17 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
             case R.id.top_rated_menu:
                 retrieveTopRatedFromNetwork();
                 this.action = TOP_RATED;
+                resetRecyclerScrollPosition();
                 return true;
             case R.id.popular_menu:
                 retrievePopularFromNetwork();
                 this.action = POPULAR;
+                resetRecyclerScrollPosition();
                 return true;
             case R.id.favorites_menu:
                 retrieveFavoritesFromRoom();
                 this.action = FAVORITE;
+                resetRecyclerScrollPosition();
                 return true;
         }
 
@@ -164,6 +167,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
                 }
 
                 movieAdapter.setMovies(movies1);
+                retrieveRecyclerScrollPosition();
             }
         });
         movieRoomViewModel.findAll();
@@ -171,10 +175,12 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
 
     private void retrievePopularFromNetwork() {
         Call<MovieList> call = getMovieDataService.getMovieByPopular();
+
         call.enqueue(new Callback<MovieList>() {
             @Override
             public void onResponse(Call<MovieList> call, Response<MovieList> response) {
                 movieAdapter.setMovies(response.body().getMovies());
+                retrieveRecyclerScrollPosition();
             }
 
             @Override
@@ -191,6 +197,7 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
             @Override
             public void onResponse(Call<MovieList> call, Response<MovieList> response) {
                 movieAdapter.setMovies(response.body().getMovies());
+                retrieveRecyclerScrollPosition();
             }
 
             @Override
@@ -199,5 +206,14 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
                 startActivity(intent);
             }
         });
+    }
+
+    private void retrieveRecyclerScrollPosition(){
+        recyclerView.getLayoutManager().onRestoreInstanceState(this.state);
+    }
+
+    private void resetRecyclerScrollPosition() {
+        this.state = null;
+        this.recyclerView.getLayoutManager().scrollToPosition(0);
     }
 }
