@@ -30,7 +30,8 @@ import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
-public class MovieDetailActivity extends AppCompatActivity implements TrailerAdapter.TrailerAdapterOnClickHandler, ReviewAdapter.ReviewAdapterOnClickHandler {
+public class MovieDetailActivity extends AppCompatActivity implements TrailerAdapter.TrailerAdapterOnClickHandler {
+
 
     private ReviewAdapter reviewAdapter;
     private TrailerAdapter trailerAdapter;
@@ -38,6 +39,7 @@ public class MovieDetailActivity extends AppCompatActivity implements TrailerAda
 
     private int id;
     private boolean isFavorite;
+    private String poster;
 
     private TextView txtLanguage;
     private TextView txtReleasedOn;
@@ -70,7 +72,7 @@ public class MovieDetailActivity extends AppCompatActivity implements TrailerAda
         LinearLayoutManager linearLayoutManager2 = new LinearLayoutManager(this);
         reviewRecyclerView.setLayoutManager(linearLayoutManager2);
         reviewRecyclerView.setHasFixedSize(true);
-        reviewAdapter = new ReviewAdapter(this, new ArrayList<Review>());
+        reviewAdapter = new ReviewAdapter(new ArrayList<Review>());
         reviewRecyclerView.setAdapter(reviewAdapter);
     }
 
@@ -120,6 +122,7 @@ public class MovieDetailActivity extends AppCompatActivity implements TrailerAda
         txtVoteAverage.setText(String.valueOf(vote));
         txtReleasedOn.setText(release);
         txtOverview.setText(overview);
+        this.poster = poster;
 
         Glide.with(this).load(MovieAdapter.IMAGE_BASE_URL + poster).into(imgPoster);
 
@@ -156,7 +159,7 @@ public class MovieDetailActivity extends AppCompatActivity implements TrailerAda
 
     public void setFavoriteOptions(final View view) {
 
-        final MovieRoom movieRoom = new MovieRoom(String.valueOf(this.id), txtTitle.getText().toString(), txtReleasedOn.getText().toString(), "", txtOverview.getText().toString(), txtVoteAverage.getText().toString(), txtLanguage.getText().toString());
+        final MovieRoom movieRoom = new MovieRoom(String.valueOf(this.id), txtTitle.getText().toString(), txtReleasedOn.getText().toString(), this.poster, txtOverview.getText().toString(), txtVoteAverage.getText().toString(), txtLanguage.getText().toString());
 
         runOnUiThread(new Runnable() {
             @Override

@@ -23,8 +23,6 @@
         <activity
             android:name=".activity.MovieDetailActivity"
             android:parentActivityName=".activity.MainActivity" />
-        <activity android:name=".activity.FavoriteActivity"
-            android:parentActivityName=".activity.MainActivity"/>
     </application>
 
 </manifest>

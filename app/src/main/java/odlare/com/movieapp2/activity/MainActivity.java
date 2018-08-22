@@ -1,7 +1,11 @@
 package odlare.com.movieapp2.activity;
 
+import android.arch.lifecycle.Observer;
+import android.arch.lifecycle.ViewModelProviders;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Parcelable;
+import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.GridLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -9,25 +13,36 @@ import android.view.Menu;
 import android.view.MenuItem;
 
 import java.util.ArrayList;
+import java.util.List;
 
 import odlare.com.movieapp2.R;
 import odlare.com.movieapp2.adapter.MovieAdapter;
 import odlare.com.movieapp2.model.Movie;
 import odlare.com.movieapp2.model.MovieList;
+import odlare.com.movieapp2.model.RoomEntity.MovieRoom;
 import odlare.com.movieapp2.network.GetMovieDataService;
 import odlare.com.movieapp2.network.RetrofitInstance;
+import odlare.com.movieapp2.viewmodel.MovieRoomViewModel;
 import retrofit2.Call;
 import retrofit2.Callback;
 import retrofit2.Response;
 
 public class MainActivity extends AppCompatActivity implements MovieAdapter.MovieAdapterOnClickHandler {
 
+    private static final String TOP_RATED = "TOP_RATED";
+    private static final String POPULAR = "POPULAR";
+    private static final String FAVORITE = "FAVORITE";
+
+    private String action = TOP_RATED;
+
     private GetMovieDataService getMovieDataService;
     private MovieAdapter movieAdapter;
     private RecyclerView recyclerView;
+    private Parcelable state;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
@@ -38,25 +53,36 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
         recyclerView.setHasFixedSize(true);
 
         movieAdapter = new MovieAdapter(this, new ArrayList<Movie>());
-
         recyclerView.setAdapter(movieAdapter);
-
         getMovieDataService = RetrofitInstance.getRetrofitInstance().create(GetMovieDataService.class);
 
-        Call<MovieList> call = getMovieDataService.getMovieByTopRated();
+        if (savedInstanceState != null) {
 
-        call.enqueue(new Callback<MovieList>() {
-            @Override
-            public void onResponse(Call<MovieList> call, Response<MovieList> response) {
-                movieAdapter.setMovies(response.body().getMovies());
+            this.action = savedInstanceState.getString("action");
+            recyclerView.getLayoutManager().onRestoreInstanceState(this.state);
+
+            if (this.action.equals(FAVORITE)) {
+                retrieveFavoritesFromRoom();
+            } else if (this.action.equals(TOP_RATED)) {
+                retrieveTopRatedFromNetwork();
+            } else if (this.action.equals(POPULAR)) {
+                retrievePopularFromNetwork();
             }
 
-            @Override
-            public void onFailure(Call<MovieList> call, Throwable t) {
-                Intent intent = new Intent(getBaseContext(), FavoriteActivity.class);
-                startActivity(intent);
-            }
-        });
+        } else {
+
+            retrieveTopRatedFromNetwork();
+
+        }
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        if (this.action.equals(FAVORITE)) {
+            retrieveFavoritesFromRoom();
+        }
+        recyclerView.getLayoutManager().onRestoreInstanceState(this.state);
     }
 
     @Override
@@ -89,51 +115,89 @@ public class MainActivity extends AppCompatActivity implements MovieAdapter.Movi
 
         int itemSelected = item.getItemId();
 
-        Call<MovieList> call;
-
         switch (itemSelected) {
 
             case R.id.top_rated_menu:
-
-                call = getMovieDataService.getMovieByTopRated();
-
-                call.enqueue(new Callback<MovieList>() {
-                    @Override
-                    public void onResponse(Call<MovieList> call, Response<MovieList> response) {
-                        movieAdapter.setMovies(response.body().getMovies());
-                    }
-
-                    @Override
-                    public void onFailure(Call<MovieList> call, Throwable t) {
-                        Intent intent = new Intent(getBaseContext(), FavoriteActivity.class);
-                        startActivity(intent);
-                    }
-                });
+                retrieveTopRatedFromNetwork();
+                this.action = TOP_RATED;
                 return true;
             case R.id.popular_menu:
-
-                call = getMovieDataService.getMovieByPopular();
-
-                call.enqueue(new Callback<MovieList>() {
-                    @Override
-                    public void onResponse(Call<MovieList> call, Response<MovieList> response) {
-                        movieAdapter.setMovies(response.body().getMovies());
-                    }
-
-                    @Override
-                    public void onFailure(Call<MovieList> call, Throwable t) {
-                        Intent intent = new Intent(getBaseContext(), FavoriteActivity.class);
-                        startActivity(intent);
-                    }
-                });
+                retrievePopularFromNetwork();
+                this.action = POPULAR;
                 return true;
             case R.id.favorites_menu:
-                Intent intent = new Intent(this, FavoriteActivity.class);
-                startActivity(intent);
+                retrieveFavoritesFromRoom();
+                this.action = FAVORITE;
                 return true;
-
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putString("action", this.action);
+        Parcelable state = recyclerView.getLayoutManager().onSaveInstanceState();
+        outState.putParcelable("state", state);
+    }
+
+    @Override
+    protected void onRestoreInstanceState(Bundle savedInstanceState) {
+        super.onRestoreInstanceState(savedInstanceState);
+        this.action = savedInstanceState.getString("action");
+        this.state = savedInstanceState.getParcelable("state");
+    }
+
+    private void retrieveFavoritesFromRoom() {
+        MovieRoomViewModel movieRoomViewModel = ViewModelProviders.of(this).get(MovieRoomViewModel.class);
+        movieRoomViewModel.getMovies().observe(this, new Observer<List<MovieRoom>>() {
+            @Override
+            public void onChanged(@Nullable List<MovieRoom> movieRooms) {
+
+                List<Movie> movies1 = new ArrayList<>();
+
+                for (MovieRoom movieRoom : movieRooms) {
+                    Movie movie = new Movie(0, Integer.valueOf(movieRoom.getId()), false, Double.valueOf(movieRoom.getVote()), movieRoom.getTitle(),
+                            0, movieRoom.getPoster(), movieRoom.getLanguage(), null, null, false, movieRoom.getOverview(), movieRoom.getRelease(), null);
+                    movies1.add(movie);
+                }
+
+                movieAdapter.setMovies(movies1);
+            }
+        });
+        movieRoomViewModel.findAll();
+    }
+
+    private void retrievePopularFromNetwork() {
+        Call<MovieList> call = getMovieDataService.getMovieByPopular();
+        call.enqueue(new Callback<MovieList>() {
+            @Override
+            public void onResponse(Call<MovieList> call, Response<MovieList> response) {
+                movieAdapter.setMovies(response.body().getMovies());
+            }
+
+            @Override
+            public void onFailure(Call<MovieList> call, Throwable t) {
+                Intent intent = new Intent(getBaseContext(), MovieDetailActivity.class);
+                startActivity(intent);
+            }
+        });
+    }
+
+    private void retrieveTopRatedFromNetwork() {
+        Call<MovieList> call = getMovieDataService.getMovieByTopRated();
+        call.enqueue(new Callback<MovieList>() {
+            @Override
+            public void onResponse(Call<MovieList> call, Response<MovieList> response) {
+                movieAdapter.setMovies(response.body().getMovies());
+            }
+
+            @Override
+            public void onFailure(Call<MovieList> call, Throwable t) {
+                Intent intent = new Intent(getBaseContext(), MovieDetailActivity.class);
+                startActivity(intent);
+            }
+        });
     }
 }

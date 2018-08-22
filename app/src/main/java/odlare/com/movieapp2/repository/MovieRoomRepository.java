@@ -14,16 +14,20 @@ import odlare.com.movieapp2.model.RoomEntity.MovieRoom;
 public class MovieRoomRepository {
 
     private MovieRoomDAO movieRoomDao;
-    private LiveData<List<MovieRoom>> players;
+    private LiveData<List<MovieRoom>> movieRooms;
 
     public MovieRoomRepository(Application application) {
         MovieRoomDatabase db = MovieRoomDatabase.getDatabase(application);
         this.movieRoomDao = db.movieRoomDAO();
-        this.players = movieRoomDao.findAll();
+        findAll();
     }
 
-    public LiveData<List<MovieRoom>> findAll() {
-        return this.players;
+    public void findAll() {
+        this.movieRooms = this.movieRoomDao.findAll();
+    }
+
+    public LiveData<List<MovieRoom>> getMovieRooms() {
+        return movieRooms;
     }
 
     public void insert(MovieRoom player) {

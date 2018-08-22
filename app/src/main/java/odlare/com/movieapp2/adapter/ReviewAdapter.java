@@ -14,16 +14,10 @@ import odlare.com.movieapp2.model.Review;
 
 public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ReviewAdapterViewHolder> {
 
-    private ReviewAdapterOnClickHandler reviewAdapterOnClickHandler;
     private List<Review> reviews;
 
-    public ReviewAdapter(ReviewAdapterOnClickHandler reviewAdapterOnClickHandler, List<Review> reviews) {
-        this.reviewAdapterOnClickHandler = reviewAdapterOnClickHandler;
+    public ReviewAdapter(List<Review> reviews) {
         this.reviews = reviews;
-    }
-
-    public interface ReviewAdapterOnClickHandler {
-        void onClick(int position);
     }
 
     public void setReviews(List<Review> reviews) {
@@ -67,13 +61,6 @@ public class ReviewAdapter extends RecyclerView.Adapter<ReviewAdapter.ReviewAdap
 
             author = itemView.findViewById(R.id.txtAuthor_);
             content = itemView.findViewById(R.id.txtContent_);
-
-            itemView.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    reviewAdapterOnClickHandler.onClick(getAdapterPosition());
-                }
-            });
         }
     }
 }
